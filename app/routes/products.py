@@ -4,6 +4,7 @@ from fastapi import Depends
 from app.utils.auth import isValidLoggedInUserSessionToken
 from app.utils.response import standard_response, standard_http_response
 from app.schemas.products_schema import *
+from app.utils.redis_key_helper import *
 
 
 def getDummyProductsDetails():
@@ -45,6 +46,9 @@ def get_all_products(params:ProductListRequest=Depends(), isValidSessionToken:bo
     try:
         if isValidSessionToken:
             productsList = getDummyProductsDetails()
+            bulkProductSetCacheEntries = {"Product-ID-"+str(item["productId"]): item for item in productsList}
+            pipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesViaPipeline(bulkProductSetCacheEntries)
+            print(f"pipelineExecutedRspObj: {pipelineExecutedRspObj}")
             productsRspObj['status_code'] = 200
             productsRspObj['messages'] = [f"Products found successfully."]
             productsRspObj['data'] = productsList
@@ -58,7 +62,7 @@ def get_all_products(params:ProductListRequest=Depends(), isValidSessionToken:bo
 
 
 @router.get("/{product_id}")
-def get_all_products(params:ProductDetailRequest=Depends(), isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
+def get_product_details(params:ProductDetailRequest=Depends(), isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
     """
         Retrieve the details of a specific product.
         This endpoint returns detailed information about a single product based on the
@@ -75,9 +79,14 @@ def get_all_products(params:ProductDetailRequest=Depends(), isValidSessionToken:
     try:
         if isValidSessionToken:
             productId = params.product_id
-            productRspObj['status_code'] = 200
-            productRspObj['messages'] = [f"Product found successfully."]
-            productRspObj['data'] = {}
+            keyName = f"Product-ID-{productId}"
+            productCachedEntriesRspObj = getKeyValueObjCacheEntries(keyName)
+            if productCachedEntriesRspObj['status_code'] == 200:
+                productRspObj['status_code'] = 200
+                productRspObj['messages'] = [f"Product found successfully."]
+                productRspObj['data'] = productCachedEntriesRspObj['data']
+            else:
+                pass
         else:
             productRspObj['status_code'] = 401
             productRspObj['messages'] = [f"Session token is invalid or expired."]
