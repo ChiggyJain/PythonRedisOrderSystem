@@ -1,28 +1,34 @@
 
-from fastapi import APIRouter, HTTPException
-from app.services.cache_service import get_product_from_cache, set_product_cache
-from app.services.stock_service import stock_key, check_stock
-from app.utils.response import ok, err
-from app.redis_client import redisConObj
-
+from fastapi import APIRouter
+from app.utils.response import standard_response, standard_http_response
 router = APIRouter()
 
-@router.get("/{product_id}")
-def get_product(product_id: str):
-    cached = get_product_from_cache(product_id)
-    if cached:
-        return ok(cached, message="Product (cache)")
-    # Simulate DB read: here we use Redis hash to represent product master
-    master_key = f"product_master:{product_id}"
-    data = redisConObj.hgetall(master_key)
-    if not data:
-        return err(404, "Product not found")
-    set_product_cache(product_id, data)
-    return ok(data, "Product (master)")
 
-@router.post("/{product_id}/setstock")
-def set_stock(product_id: str, qty: int):
-    if qty < 0:
-        return err(400, "qty must be >= 0")
-    redisConObj.set(stock_key(product_id), qty)
-    return ok({"product_id": product_id, "stock": qty}, "Stock updated")
+
+@router.get("/")
+def get_all_products():
+    """
+        This API validates user login credentials.
+        - Provide your login username.
+        - Use the sample usernames: **User1**, **User2**.
+        - If the credentials are valid, the API returns an authentication token string [No JWT concept] with valid of 5 minutes only.
+        - If the credentials are invalid, an appropriate error message is returned.
+    """
+    loginRspObj = standard_response(status_code=401, messages=["Invalid username."], data={})
+    try:
+        if loginUserRequestFormData.username in dummyLoginUserNameList:
+            # create a simple session token in Redis with TTL
+            loggedInUserId = dummyLoginUserNameList[loginUserRequestFormData.username]["UserId"]
+            token = uuid4().hex
+            redisConObj.set(f"UserLoggedInSessionToken-{loggedInUserId}", token, ex=SESSION_TTL_SECONDS)
+            loginRspObj['status_code'] = 200
+            loginRspObj['messages'] = [f"User login successfully.", f"Given token is valid for 5 minutes only."]
+            loginRspObj['data'] = {
+                "token" : token
+            }
+    except Exception as e:
+        loginRspObj['status_code'] = 500
+        loginRspObj['messages'] = [f"Error occured: {str(e)}"]
+    return standard_http_response(status_code=loginRspObj["status_code"], messages=loginRspObj['messages'], data=loginRspObj['data'])    
+
+

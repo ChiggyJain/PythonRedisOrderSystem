@@ -5,12 +5,15 @@ from app.schemas.login_schema import LoginRequest
 from app.redis_client import redisConObj
 from app.config import SESSION_TTL_SECONDS
 from uuid import uuid4
-dummyLoginUserNameList = {"User1", "User2"}
+dummyLoginUserNameList = {
+    "User1" : {"UserId" : "11"},
+    "User2" : {"UserId" : "12"}
+}
 router = APIRouter()
 
 
 @router.post("/login", summary="User Login Authentication")
-def login(loginUserRequestFormData: LoginRequest):
+def authenticate_user(loginUserRequestFormData: LoginRequest):
     """
         This API validates user login credentials.
         - Provide your login username.
@@ -22,10 +25,11 @@ def login(loginUserRequestFormData: LoginRequest):
     try:
         if loginUserRequestFormData.username in dummyLoginUserNameList:
             # create a simple session token in Redis with TTL
+            loggedInUserId = dummyLoginUserNameList[loginUserRequestFormData.username]["UserId"]
             token = uuid4().hex
-            redisConObj.set(f"UserLoggedInSessionToken:{token}", loginUserRequestFormData.username, ex=SESSION_TTL_SECONDS)
+            redisConObj.set(f"UserLoggedInSessionToken-{loggedInUserId}", token, ex=SESSION_TTL_SECONDS)
             loginRspObj['status_code'] = 200
-            loginRspObj['messages'] = [f"User login successfully.", "Given token is valid for 5 minutes only."]
+            loginRspObj['messages'] = [f"User login successfully.", f"Given token is valid for 5 minutes only."]
             loginRspObj['data'] = {
                 "token" : token
             }
