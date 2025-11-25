@@ -43,7 +43,6 @@ def getKeyValueObjCacheEntries(keyName):
     try:
         if keyName:
             keyValueObj = json.loads(redisConObj.get(keyName))
-            print(f"keyValueObj: {keyValueObj}")
             keyValueObjRspObj['status_code'] = 200
             keyValueObjRspObj['messages'] = [f"Give {keyName} cache entries found."]
             keyValueObjRspObj['data'] = [keyValueObj]

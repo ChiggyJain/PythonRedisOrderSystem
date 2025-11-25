@@ -42,13 +42,12 @@ def get_all_products(params:ProductListRequest=Depends(), isValidSessionToken:bo
         - If the session token is invalid or expired, the request will be rejected.
         - This API does not require any path parameters; only query parameters are used.
     """
-    productsRspObj = standard_response(status_code=401, messages=["Products not found."], data={})
+    productsRspObj = standard_response(status_code=404, messages=["Products not found."], data={})
     try:
         if isValidSessionToken:
             productsList = getDummyProductsDetails()
-            bulkProductSetCacheEntries = {"Product-ID-"+str(item["productId"]): item for item in productsList}
-            pipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesViaPipeline(bulkProductSetCacheEntries)
-            print(f"pipelineExecutedRspObj: {pipelineExecutedRspObj}")
+            bulkProductSetCacheRedisEntries = {"Product-ID-"+str(item["productId"]): item for item in productsList}
+            pipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesViaPipeline(bulkProductSetCacheRedisEntries)
             productsRspObj['status_code'] = 200
             productsRspObj['messages'] = [f"Products found successfully."]
             productsRspObj['data'] = productsList
@@ -75,19 +74,23 @@ def get_product_details(params:ProductDetailRequest=Depends(), isValidSessionTok
         - If the session token is invalid or expired, the request will be rejected.
         - If the product ID does not exist, an appropriate error message will be returned.
     """
-    productRspObj = standard_response(status_code=401, messages=["Product not found."], data={})
+    productRspObj = standard_response(status_code=404, messages=["Product not found."], data={})
     try:
         if isValidSessionToken:
             productId = params.product_id
-            keyName = f"Product-ID-{productId}"
-            productCachedEntriesRspObj = getKeyValueObjCacheEntries(keyName)
-            print(f"productCachedEntriesRspObj: {productCachedEntriesRspObj}")
+            redisCacheEntriesKeyName = f"Product-ID-{productId}"
+            productCachedEntriesRspObj = getKeyValueObjCacheEntries(redisCacheEntriesKeyName)
             if productCachedEntriesRspObj['status_code'] == 200:
                 productRspObj['status_code'] = 200
                 productRspObj['messages'] = [f"Product found successfully."]
                 productRspObj['data'] = productCachedEntriesRspObj['data']
             else:
-                pass
+                productsList = getDummyProductsDetails()
+                productIdWiseEntries = {item["productId"]: item for item in productsList}
+                if productId in productIdWiseEntries:
+                    productRspObj['status_code'] = 200
+                    productRspObj['messages'] = [f"Product found successfully."]
+                    productRspObj['data'] = [productIdWiseEntries[productId]]
         else:
             productRspObj['status_code'] = 401
             productRspObj['messages'] = [f"Session token is invalid or expired."]
