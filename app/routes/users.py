@@ -3,7 +3,6 @@ from fastapi import APIRouter
 from app.utils.response import standard_response, standard_http_response
 from app.schemas.login_schema import LoginRequest
 from app.redis_client import redisConObj
-from app.config import SESSION_TTL_SECONDS
 from uuid import uuid4
 dummyLoginUserNameList = {
     "User1" : {"UserId" : "11"},
@@ -27,7 +26,7 @@ def authenticate_user(loginUserRequestFormData: LoginRequest):
             # create a simple session token in Redis with TTL
             loggedInUserId = dummyLoginUserNameList[loginUserRequestFormData.username]["UserId"]
             token = uuid4().hex
-            redisConObj.set(f"UserLoggedInSessionToken-{loggedInUserId}", token, ex=SESSION_TTL_SECONDS)
+            redisConObj.set(f"UserLoggedInSessionToken-{token}", loggedInUserId, ex=300)
             loginRspObj['status_code'] = 200
             loginRspObj['messages'] = [f"User login successfully.", f"Given token is valid for 5 minutes only."]
             loginRspObj['data'] = {
@@ -35,5 +34,5 @@ def authenticate_user(loginUserRequestFormData: LoginRequest):
             }
     except Exception as e:
         loginRspObj['status_code'] = 500
-        loginRspObj['messages'] = [f"Error occured: {str(e)}"]
+        loginRspObj['messages'] = [f"An error occured: {str(e)}"]
     return standard_http_response(status_code=loginRspObj["status_code"], messages=loginRspObj['messages'], data=loginRspObj['data'])    

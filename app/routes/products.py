@@ -1,34 +1,87 @@
 
 from fastapi import APIRouter
+from fastapi import Depends
+from app.utils.auth import isValidLoggedInUserSessionToken
 from app.utils.response import standard_response, standard_http_response
+from app.schemas.products_schema import *
+
+
+def getDummyProductsDetails():
+    productsList = [
+        {
+            "productId" : 11,
+            "productName" : "Shampoo",
+            "availableStockQty" : 11
+        },
+        {
+            "productId" : 12,
+            "productName" : "Detol Soap",
+            "productAvailableStockQty" : 12
+        },
+        {
+            "productId" : 13,
+            "productName" : "Tooth Paste",
+            "productAvailableStockQty" : 13
+        }
+    ]
+    return productsList
+
+
+
 router = APIRouter()
-
-
-
 @router.get("/")
-def get_all_products():
+def get_all_products(params:ProductListRequest=Depends(), isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
     """
-        This API validates user login credentials.
-        - Provide your login username.
-        - Use the sample usernames: **User1**, **User2**.
-        - If the credentials are valid, the API returns an authentication token string [No JWT concept] with valid of 5 minutes only.
-        - If the credentials are invalid, an appropriate error message is returned.
+        Retrieve the complete list of available products.
+        This endpoint returns all products along with their basic details such as
+        product ID, product name, and available stock quantity.
+        **Requirements**
+        - A valid logged-in session token must be provided.
+        **Notes**
+        - If the session token is invalid or expired, the request will be rejected.
+        - This API does not require any path parameters; only query parameters are used.
     """
-    loginRspObj = standard_response(status_code=401, messages=["Invalid username."], data={})
+    productsRspObj = standard_response(status_code=401, messages=["Products not found."], data={})
     try:
-        if loginUserRequestFormData.username in dummyLoginUserNameList:
-            # create a simple session token in Redis with TTL
-            loggedInUserId = dummyLoginUserNameList[loginUserRequestFormData.username]["UserId"]
-            token = uuid4().hex
-            redisConObj.set(f"UserLoggedInSessionToken-{loggedInUserId}", token, ex=SESSION_TTL_SECONDS)
-            loginRspObj['status_code'] = 200
-            loginRspObj['messages'] = [f"User login successfully.", f"Given token is valid for 5 minutes only."]
-            loginRspObj['data'] = {
-                "token" : token
-            }
+        if isValidSessionToken:
+            productsList = getDummyProductsDetails()
+            productsRspObj['status_code'] = 200
+            productsRspObj['messages'] = [f"Products found successfully."]
+            productsRspObj['data'] = productsList
+        else:
+            productsRspObj['status_code'] = 401
+            productsRspObj['messages'] = [f"Session token is invalid or expired."]
     except Exception as e:
-        loginRspObj['status_code'] = 500
-        loginRspObj['messages'] = [f"Error occured: {str(e)}"]
-    return standard_http_response(status_code=loginRspObj["status_code"], messages=loginRspObj['messages'], data=loginRspObj['data'])    
+        productsRspObj['status_code'] = 500
+        productsRspObj['messages'] = [f"An error occured: {str(e)}"]
+    return standard_http_response(status_code=productsRspObj["status_code"], messages=productsRspObj['messages'], data=productsRspObj['data'])    
 
 
+@router.get("/{product_id}")
+def get_all_products(params:ProductDetailRequest=Depends(), isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
+    """
+        Retrieve the details of a specific product.
+        This endpoint returns detailed information about a single product based on the
+        product ID provided in the request path.
+        **Requirements**
+        - A valid logged-in session token must be provided.
+        **Parameters**
+        - `product_id` (path): Unique ID of the product whose details are required.
+        **Notes**
+        - If the session token is invalid or expired, the request will be rejected.
+        - If the product ID does not exist, an appropriate error message will be returned.
+    """
+    productRspObj = standard_response(status_code=401, messages=["Product not found."], data={})
+    try:
+        if isValidSessionToken:
+            productId = params.product_id
+            productRspObj['status_code'] = 200
+            productRspObj['messages'] = [f"Product found successfully."]
+            productRspObj['data'] = {}
+        else:
+            productRspObj['status_code'] = 401
+            productRspObj['messages'] = [f"Session token is invalid or expired."]
+    except Exception as e:
+        productRspObj['status_code'] = 500
+        productRspObj['messages'] = [f"An error occured: {str(e)}"]
+    return standard_http_response(status_code=productRspObj["status_code"], messages=productRspObj['messages'], data=productRspObj['data'])   
