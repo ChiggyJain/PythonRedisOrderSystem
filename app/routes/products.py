@@ -81,6 +81,7 @@ def get_product_details(params:ProductDetailRequest=Depends(), isValidSessionTok
             productId = params.product_id
             keyName = f"Product-ID-{productId}"
             productCachedEntriesRspObj = getKeyValueObjCacheEntries(keyName)
+            print(f"productCachedEntriesRspObj: {productCachedEntriesRspObj}")
             if productCachedEntriesRspObj['status_code'] == 200:
                 productRspObj['status_code'] = 200
                 productRspObj['messages'] = [f"Product found successfully."]

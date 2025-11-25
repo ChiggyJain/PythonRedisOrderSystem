@@ -3,8 +3,10 @@ import json
 from app.redis_client import redisConObj
 from app.utils.response import standard_response
 
+
 def isValidRedisKeyTTL(keyName:str):
     return redisConObj.ttl(keyName)>0
+
 
 def bulkSetKeyValueObjCacheEntriesViaPipeline(entries: dict, ttl: int = 0):
     """
@@ -30,6 +32,7 @@ def bulkSetKeyValueObjCacheEntriesViaPipeline(entries: dict, ttl: int = 0):
         pipelineExecutedRspObj['messages'] = [f"An error occured: {str(e)}"]
     return pipelineExecutedRspObj
 
+
 def getKeyValueObjCacheEntries(keyName):
     """
         Store multiple key-value entries in Redis using pipeline.
@@ -39,10 +42,11 @@ def getKeyValueObjCacheEntries(keyName):
     keyValueObjRspObj = standard_response(status_code=401, messages=["Given {keyName} cache entries not found."], data={})
     try:
         if keyName:
-            keyValueObj = json.load(redisConObj.get(keyName))
+            keyValueObj = json.loads(redisConObj.get(keyName))
+            print(f"keyValueObj: {keyValueObj}")
             keyValueObjRspObj['status_code'] = 200
             keyValueObjRspObj['messages'] = [f"Give {keyName} cache entries found."]
-            keyValueObjRspObj['data'] = keyValueObj
+            keyValueObjRspObj['data'] = [keyValueObj]
     except Exception as e:
         keyValueObjRspObj['status_code'] = 500
         keyValueObjRspObj['messages'] = [f"An error occured: {str(e)}"]
