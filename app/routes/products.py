@@ -34,6 +34,7 @@ def prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline(product
 
 
 router = APIRouter()
+
 @router.get("/", summary="Fetch all Products Details")
 async def get_all_products(isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
     """
@@ -111,7 +112,6 @@ async def update_product_stock_details(params:ProductStockRequest, isValidSessio
         - If the product ID does not exist, an appropriate error message will be returned.
         - Only authenticated users are allowed to perform stock updates.
     """
-    print(f"update_product_stock_details params: {params}")
     productRspObj = standard_response(status_code=404, messages=["Product stock quantity not updated."])
     try:
         global productsList

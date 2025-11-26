@@ -4,12 +4,13 @@ from app.utils.response import standard_response, standard_http_response
 from app.schemas.login_schema import LoginRequest
 from app.redis_client import redisConObj
 from uuid import uuid4
+
 dummyLoginUserNameList = {
     "User1" : {"UserId" : "11"},
     "User2" : {"UserId" : "12"}
 }
-router = APIRouter()
 
+router = APIRouter()
 
 @router.post("/login", summary="User Login Authentication")
 async def authenticate_user(loginUserRequestFormData: LoginRequest):
