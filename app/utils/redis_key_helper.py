@@ -39,14 +39,48 @@ def getKeyValueObjRedisCacheEntries(keyName):
         entries: dict → { keyInputValue : valueObj }
         ttl: expiration time in seconds for each key.
     """
-    keyValueObjRspObj = standard_response(status_code=404, messages=["Given {keyName} cache entries are not found."])
+    redisKeyValueObjRspObj = standard_response(status_code=404, messages=["Given {keyName} cache entries are not found."])
     try:
         if keyName:
             keyValueObj = json.loads(redisConObj.get(keyName))
-            keyValueObjRspObj['status_code'] = 200
-            keyValueObjRspObj['messages'] = [f"Given {keyName} cache entries are found."]
-            keyValueObjRspObj['data'] = [keyValueObj]
+            redisKeyValueObjRspObj['status_code'] = 200
+            redisKeyValueObjRspObj['messages'] = [f"Given {keyName} cache entries are found."]
+            redisKeyValueObjRspObj['data'] = [keyValueObj]
     except Exception as e:
-        keyValueObjRspObj['status_code'] = 500
-        keyValueObjRspObj['messages'] = [f"An error occured: {str(e)}"]
-    return keyValueObjRspObj
+        redisKeyValueObjRspObj['status_code'] = 500
+        redisKeyValueObjRspObj['messages'] = [f"An error occured: {str(e)}"]
+    return redisKeyValueObjRspObj
+
+
+def fixedWindowRedisRateLimiter(keyName=str, maxRequest=int, windowSeconds=int):
+    """
+        Apply Fixed Window Rate Limiting using Redis INCR + EXPIRE mechanism.
+        **How it works**
+        - Redis key represents a time window.
+        - INCR increments the request counter for the window.
+        - EXPIRE ensures the counter resets when the window ends.
+        - If the counter exceeds `max_requests`, rate limit is triggered.
+        **Parameters**
+        - key_name (str): Redis key representing the fixed window bucket (e.g., "rate:user123:170000001").
+        - max_requests (int): Maximum allowed requests in the window.
+        - window_seconds (int): Size of the window in seconds.
+    """
+    fixedWindowRedisRateLimiterRspObj = standard_response(status_code=429, messages=["Too many requests. Please try again later."])
+    try:
+        if keyName:
+            current = redisConObj.incr(keyName)
+            if current == 1:
+                redisConObj.expire(keyName, windowSeconds)
+            if current > maxRequest:
+                fixedWindowRedisRateLimiterRspObj['status_code'] = 429
+                fixedWindowRedisRateLimiterRspObj['messages'] = [f"Too many requests. Please try again later."]
+            else:
+                fixedWindowRedisRateLimiterRspObj['status_code'] = 200
+                fixedWindowRedisRateLimiterRspObj['messages'] = [f"Request allowed."]
+                fixedWindowRedisRateLimiterRspObj['dtaa'] = {
+                    "currentCount" : current
+                }
+    except Exception as e:
+        fixedWindowRedisRateLimiterRspObj['status_code'] = 500
+        fixedWindowRedisRateLimiterRspObj['messages'] = [f"An error occured: {str(e)}"]
+    return fixedWindowRedisRateLimiterRspObj

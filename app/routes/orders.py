@@ -2,6 +2,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from uuid import uuid4
+import time
 from app.utils.auth import isValidLoggedInUserSessionToken
 from app.utils.response import standard_response, standard_http_response
 from app.schemas.orders_schema import *
@@ -40,16 +41,24 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
         productIdWiseDetails = getDummyProductIdWiseDetails(productsList)
         if productId in productIdWiseDetails:
             if int(productIdWiseDetails[productId]['productAvailableStockQty'])>productStockQuantity:
-                createdNewOrderId = f"Order-ID-"+uuid4().hex
-                productIdWiseDetails[productId]['productAvailableStockQty']-= productStockQuantity
-                productsList = list(productIdWiseDetails.values())
-                bulkProductSetCacheRedisEntries = prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline([productIdWiseDetails[productId]])
-                redisPipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesInRedisViaPipeline(bulkProductSetCacheRedisEntries)
-                placedOrderRspObj['status_code'] = 200
-                placedOrderRspObj['messages'] = [f"Order placed successfully."]
-                placedOrderRspObj['data'] = {
-                    "orderId" : createdNewOrderId
-                }
+                maxRequest = 5
+                windowSeconds = 60
+                redisRateLimiterKeyName = f"RL:UserID:111+ProductID:{productId}+T:{int(time.time() // windowSeconds)}" 
+                fixedWindowRedisRateLimiterRspObj = fixedWindowRedisRateLimiter(redisRateLimiterKeyName, maxRequest, windowSeconds)
+                if fixedWindowRedisRateLimiterRspObj['status_code'] == 200:
+                    createdNewOrderId = uuid4().hex
+                    productIdWiseDetails[productId]['productAvailableStockQty']-= productStockQuantity
+                    productsList = list(productIdWiseDetails.values())
+                    bulkProductSetCacheRedisEntries = prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline([productIdWiseDetails[productId]])
+                    redisPipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesInRedisViaPipeline(bulkProductSetCacheRedisEntries)
+                    placedOrderRspObj['status_code'] = 200
+                    placedOrderRspObj['messages'] = [f"Order placed successfully."]
+                    placedOrderRspObj['data'] = {
+                        "orderId" : createdNewOrderId
+                    }
+                else:
+                    placedOrderRspObj['status_code'] = fixedWindowRedisRateLimiterRspObj['status_code']
+                    placedOrderRspObj['messages'] = fixedWindowRedisRateLimiterRspObj['messages']                    
             else:
                 placedOrderRspObj['messages'] = [f"Insufficient product quantity."]
         else:
