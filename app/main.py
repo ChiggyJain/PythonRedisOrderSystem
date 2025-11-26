@@ -1,5 +1,7 @@
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import HTTPException
 from app.utils.response import standard_http_response
 from app.routes import users as users_router
 from app.routes import products as products_router
@@ -14,9 +16,23 @@ app.include_router(products_router.router, prefix="/products", tags=["products"]
 #app.include_router(orders_router.router, prefix="/orders", tags=["orders"])
 
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    error_messages = []
+    for err in exc.errors():
+        field = ".".join(err["loc"][1:])
+        msg = err["msg"]
+        error_messages.append(f"{field}: {msg}")
+    return standard_http_response(status_code=422, messages=error_messages)
+
+
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    return standard_http_response(status_code=exc.status_code, messages=[exc.detail])
+
 
 @app.get("/system-health", summary="System Health")
-def check_system_health():
+async def check_system_health():
     """
         This API is used to check system health status only.
     """

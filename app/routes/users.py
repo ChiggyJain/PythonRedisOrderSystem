@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.post("/login", summary="User Login Authentication")
-def authenticate_user(loginUserRequestFormData: LoginRequest):
+async def authenticate_user(loginUserRequestFormData: LoginRequest):
     """
         This API validates user login credentials.
         - Provide your login username.
