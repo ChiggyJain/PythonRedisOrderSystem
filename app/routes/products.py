@@ -27,6 +27,12 @@ def getDummyProductsDetails():
     ]
     return productsList
 
+def getDummyProductIdWiseDetails(productsList):
+    return {item["productId"]: item for item in productsList}
+
+def prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline(productsList):
+    return {"Product-ID-"+str(item["productId"]): item for item in productsList}
+
 
 
 router = APIRouter()
@@ -46,8 +52,8 @@ def get_all_products(params:ProductListRequest=Depends(), isValidSessionToken:bo
     try:
         if isValidSessionToken:
             productsList = getDummyProductsDetails()
-            bulkProductSetCacheRedisEntries = {"Product-ID-"+str(item["productId"]): item for item in productsList}
-            pipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesViaPipeline(bulkProductSetCacheRedisEntries)
+            bulkProductSetCacheRedisEntries = prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline(productsList)
+            redisPipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesInRedisViaPipeline(bulkProductSetCacheRedisEntries)
             productsRspObj['status_code'] = 200
             productsRspObj['messages'] = [f"Products found successfully."]
             productsRspObj['data'] = productsList
@@ -64,8 +70,7 @@ def get_all_products(params:ProductListRequest=Depends(), isValidSessionToken:bo
 def get_product_details(params:ProductDetailRequest=Depends(), isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
     """
         Retrieve the details of a specific product.
-        This endpoint returns detailed information about a single product based on the
-        product ID provided in the request path.
+        This endpoint returns detailed information about a single product based on the product ID provided in the request path.
         **Requirements**
         - A valid logged-in session token must be provided.
         **Parameters**
@@ -79,18 +84,18 @@ def get_product_details(params:ProductDetailRequest=Depends(), isValidSessionTok
         if isValidSessionToken:
             productId = params.product_id
             redisCacheEntriesKeyName = f"Product-ID-{productId}"
-            productCachedEntriesRspObj = getKeyValueObjCacheEntries(redisCacheEntriesKeyName)
-            if productCachedEntriesRspObj['status_code'] == 200:
+            productRedisCachedEntriesRspObj = getKeyValueObjRedisCacheEntries(redisCacheEntriesKeyName)
+            if productRedisCachedEntriesRspObj['status_code'] == 200:
                 productRspObj['status_code'] = 200
                 productRspObj['messages'] = [f"Product found successfully."]
-                productRspObj['data'] = productCachedEntriesRspObj['data']
+                productRspObj['data'] = productRedisCachedEntriesRspObj['data']
             else:
                 productsList = getDummyProductsDetails()
-                productIdWiseEntries = {item["productId"]: item for item in productsList}
-                if productId in productIdWiseEntries:
+                productIdWiseDetails = getDummyProductIdWiseDetails(productsList)
+                if productId in productIdWiseDetails:
                     productRspObj['status_code'] = 200
                     productRspObj['messages'] = [f"Product found successfully."]
-                    productRspObj['data'] = [productIdWiseEntries[productId]]
+                    productRspObj['data'] = [productIdWiseDetails[productId]]
         else:
             productRspObj['status_code'] = 401
             productRspObj['messages'] = [f"Session token is invalid or expired."]

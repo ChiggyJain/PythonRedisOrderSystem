@@ -20,4 +20,4 @@ def check_system_health():
     """
         This API is used to check system health status only.
     """
-    return standard_http_response(status_code=200, messages=["System is up and running"], data={})
+    return standard_http_response(status_code=200, messages=["System is up and running"])
