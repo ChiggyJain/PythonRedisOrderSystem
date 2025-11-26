@@ -37,7 +37,7 @@ def prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline(product
 
 router = APIRouter()
 @router.get("/")
-def get_all_products(params:ProductListRequest=Depends(), isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
+def get_all_products(isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
     """
         Retrieve the complete list of available products.
         This endpoint returns all products along with their basic details such as
@@ -96,6 +96,35 @@ def get_product_details(params:ProductDetailRequest=Depends(), isValidSessionTok
                     productRspObj['status_code'] = 200
                     productRspObj['messages'] = [f"Product found successfully."]
                     productRspObj['data'] = [productIdWiseDetails[productId]]
+        else:
+            productRspObj['status_code'] = 401
+            productRspObj['messages'] = [f"Session token is invalid or expired."]
+    except Exception as e:
+        productRspObj['status_code'] = 500
+        productRspObj['messages'] = [f"An error occured: {str(e)}"]
+    return standard_http_response(status_code=productRspObj["status_code"], messages=productRspObj['messages'], data=productRspObj['data'])   
+
+
+@router.post("/setstock")
+def update_product_stock_details(params:ProductStockRequest, isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
+    """
+        Retrieve the details of a specific product.
+        This endpoint returns detailed information about a single product based on the product ID provided in the request path.
+        **Requirements**
+        - A valid logged-in session token must be provided.
+        **Parameters**
+        - `product_id` (path): Unique ID of the product whose details are required.
+        **Notes**
+        - If the session token is invalid or expired, the request will be rejected.
+        - If the product ID does not exist, an appropriate error message will be returned.
+    """
+    print(f"update_product_stock_details params: {params}")
+    productRspObj = standard_response(status_code=404, messages=["Product not found."], data={})
+    try:
+        if isValidSessionToken:
+            productId = params.product_id
+            productStockQuantity = params.stock_quantity
+            redisCacheEntriesKeyName = f"Product-ID-{productId}"
         else:
             productRspObj['status_code'] = 401
             productRspObj['messages'] = [f"Session token is invalid or expired."]

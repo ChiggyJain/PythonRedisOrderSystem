@@ -1,9 +1,15 @@
 
+from fastapi import Header
 from app.utils.redis_key_helper import isValidRedisKeyTTL
 
-def isValidLoggedInUserSessionToken(token):
+
+def isValidLoggedInUserSessionToken(authorization: str = Header(None)):
     return True
-    keyName = f"UserLoggedInSessionToken-{token}"
-    return isValidRedisKeyTTL(keyName)
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split("Bearer ")[1].strip()
+        keyName = f"UserLoggedInSessionToken-{token}"
+        return isValidRedisKeyTTL(keyName)
+    else:
+        return False
     
     
