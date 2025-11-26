@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter
 from fastapi import Depends
-import uuid
+from uuid import uuid4
 from app.utils.auth import isValidLoggedInUserSessionToken
 from app.utils.response import standard_response, standard_http_response
 from app.schemas.orders_schema import *
@@ -40,8 +40,8 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
         productIdWiseDetails = getDummyProductIdWiseDetails(productsList)
         if productId in productIdWiseDetails:
             if int(productIdWiseDetails[productId]['productAvailableStockQty'])>productStockQuantity:
-                createdNewOrderId = f"Order-ID-"+{uuid.uuid4().hex}
-                productIdWiseDetails[productId]['productAvailableStockQty'] = (productIdWiseDetails[productId]['productAvailableStockQty'] - productStockQuantity)
+                createdNewOrderId = f"Order-ID-"+uuid4().hex
+                productIdWiseDetails[productId]['productAvailableStockQty']-= productStockQuantity
                 productsList = list(productIdWiseDetails.values())
                 bulkProductSetCacheRedisEntries = prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline([productIdWiseDetails[productId]])
                 redisPipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesInRedisViaPipeline(bulkProductSetCacheRedisEntries)
