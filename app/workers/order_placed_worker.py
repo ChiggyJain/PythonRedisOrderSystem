@@ -49,6 +49,7 @@ def runOrderPlacedStreamConsumerGroupWorker1(pollInterval=1.0):
                 for stream_name, items in entries:
                     for event_id, event_data in items:
                         print(f"Stream-Name: {orderPlacedStreamName}, Group-Name: {orderPlacedGroupName}, Worker-Name: {orderPlacedGroupWorker1Name}, Event-ID: {event_id}, Event-Data: {event_data}")
+                        # acknowledging streaming event
                         redisConObj.xack(orderPlacedStreamName, orderPlacedGroupName, event_id)
                         print(f"Processed stream events and acknowledged to this Event-ID: {event_id}")
             except Exception as e:
