@@ -9,8 +9,17 @@ from app.routes import products as products_router
 from app.routes import orders as orders_router
 from app.utils.response import standard_http_response
 
+@asynccontextmanager
+async def lifespan(app):
+    print(f"Connecting to redis...")
+    pong = redisConObj.ping()
+    print(f"Redis connected successfully: {pong}")
+    yield
+    print("Closing redis connection...")
+    redisConObj.close()
+    print("Closed redis connection...")
 
-app = FastAPI(title="Python Redis Order System")
+app = FastAPI(title="Python Redis Order System", lifespan=lifespan)
 app.include_router(users_router.router, prefix="/users", tags=["users"])
 app.include_router(products_router.router, prefix="/products", tags=["products"])
 app.include_router(orders_router.router, prefix="/orders", tags=["orders"])
@@ -30,16 +39,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
     return standard_http_response(status_code=exc.status_code, messages=[exc.detail])
 
-
-@asynccontextmanager
-async def lifespan(app):
-    print(f"Connecting to redis...")
-    pong = redisConObj.ping()
-    print(f"Redis connected successfully: {pong}")
-    yield
-    print("Closing redis connection...")
-    redisConObj.close()
-    print("Closed redis connection...")
 
 
 @app.get("/system-health", summary="System Health")
