@@ -45,6 +45,7 @@ Used extensively across the project:
 
 ### **7. Swagger UI**
 Auto-generated interactive API documentation via FastAPI.
+URL: http://127.0.0.1:8000/docs
 
 ---
 
@@ -107,4 +108,8 @@ Terminal 1 – Start FastAPI Application
 uvicorn app.main:app
 Terminal 2 – Start Background Redis Worker
 python -c "from app.workers.order_placed_worker import runOrderPlacedStreamConsumerGroupWorker1; runOrderPlacedStreamConsumerGroupWorker1()"
-
+pytest -v tests/test_all_things_in_one_way.py \
+    --disable-warnings \
+    --maxfail=0 \
+    -W ignore::DeprecationWarning \
+    -s
