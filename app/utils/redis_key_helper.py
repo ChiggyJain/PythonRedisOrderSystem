@@ -1,5 +1,6 @@
 
 import json
+from typing import Any
 from app.redis_client import redisConObj
 from app.utils.response import standard_response
 
@@ -84,3 +85,33 @@ def fixedWindowRedisRateLimiter(keyName=str, maxRequest=int, windowSeconds=int):
         fixedWindowRedisRateLimiterRspObj['status_code'] = 500
         fixedWindowRedisRateLimiterRspObj['messages'] = [f"An error occured: {str(e)}"]
     return fixedWindowRedisRateLimiterRspObj
+
+
+def addEventDataInRedisStream(streamName=str, eventData=Any):
+    """
+        Add an event entry into a Redis Stream.
+        This function generalizes adding structured event data into any Redis stream.
+        It automatically generates a unique stream entry ID and returns a consistent
+        response object.
+        **How it works**
+        - `streamName` is the Redis Stream key.
+        - `eventData` is a dictionary representing the event fields.
+        - Uses `XADD` to append a new event to the stream.
+        - Returns the Redis-generated stream entry ID.
+        **Parameters**
+        - streamName (str): Name of the Redis Stream (e.g., "Order-Events", "Login-Audit").
+        - eventData (dict): Field-value pairs representing event data.
+    """
+    addedEventDataInRedisStreamRspObj = standard_response(status_code=400, messages=["Event data not added in redis stream."])
+    try:
+        if streamName and eventData:
+            generatedEventInRedisStream = redisConObj.xadd(streamName, eventData)
+            addedEventDataInRedisStreamRspObj['status_code'] = 200
+            addedEventDataInRedisStreamRspObj['messages'] = ["Event added successfully to Redis Stream."]
+            addedEventDataInRedisStreamRspObj['data'] = {
+                "generatedEventInRedisStream" : generatedEventInRedisStream
+            }
+    except Exception as e:
+        addedEventDataInRedisStreamRspObj['status_code'] = 500
+        addedEventDataInRedisStreamRspObj['messages'] = [f"An error occured: {str(e)}"]
+    return addedEventDataInRedisStreamRspObj

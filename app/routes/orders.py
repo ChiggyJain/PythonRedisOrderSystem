@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from uuid import uuid4
 import time
+import copy
 from app.utils.auth import isValidLoggedInUserSessionToken
 from app.utils.response import standard_response, standard_http_response
 from app.schemas.orders_schema import *
@@ -47,15 +48,28 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
                 fixedWindowRedisRateLimiterRspObj = fixedWindowRedisRateLimiter(redisRateLimiterKeyName, maxRequest, windowSeconds)
                 if fixedWindowRedisRateLimiterRspObj['status_code'] == 200:
                     createdNewOrderId = uuid4().hex
+                    # deducting product-stock-quantity
                     productIdWiseDetails[productId]['productAvailableStockQty']-= productStockQuantity
                     productsList = list(productIdWiseDetails.values())
+                    # storing updated product-stock-quantity at two levels [In-Redis-Memory, In-Memory-Dict]
                     bulkProductSetCacheRedisEntries = prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline([productIdWiseDetails[productId]])
                     redisPipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesInRedisViaPipeline(bulkProductSetCacheRedisEntries)
+                    # adding placed-order event-data into redis stream for background processing details via (worker)
+                    orderPlacedRedisStreamName = "Order-Placed-Stream"
+                    orderPlacedEventData = copy.deepcopy(productIdWiseDetails[productId])
+                    orderPlacedEventData['orderId'] = createdNewOrderId
+                    orderPlacedEventData['purchaseProductStockQty'] = productStockQuantity
+                    addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
+                    # dumping response
                     placedOrderRspObj['status_code'] = 200
                     placedOrderRspObj['messages'] = [f"Order placed successfully."]
                     placedOrderRspObj['data'] = {
                         "orderId" : createdNewOrderId
                     }
+                    # from app.workers.order_placed_worker import createOrderPlacedStreamConsumerGroupInRedis
+                    # createOrderPlacedStreamConsumerGroupInRedis()
+                    
+
                 else:
                     placedOrderRspObj['status_code'] = fixedWindowRedisRateLimiterRspObj['status_code']
                     placedOrderRspObj['messages'] = fixedWindowRedisRateLimiterRspObj['messages']                    
