@@ -23,16 +23,16 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
         Place an order for a specific product.
         This endpoint creates a new order by reducing the product’s available stock
         based on the quantity provided in the request body.
-        **Requirements**
-        - A valid logged-in session token must be provided in the request headers.
-        **Request Body**
-        - `product_id`: The unique ID of the product for which the order is being placed.
-        - `stock_quantity`: The quantity of the product to order.
-        **Notes**
-        - If the session token is invalid or expired, the request will be rejected.
-        - If the product ID does not exist, an appropriate error message will be returned.
-        - If sufficient stock is not available, the order will not be processed.
-        - Only authenticated users are allowed to place orders.
+        - **Requirements**
+            - A valid logged-in session token must be provided in the request headers.
+        - **Request Body**
+            - `product_id`: The unique ID of the product for which the order is being placed.
+            - `stock_quantity`: The quantity of the product to order.
+        - **Notes**
+            - If the session token is invalid or expired, the request will be rejected.
+            - If the product ID does not exist, an appropriate error message will be returned.
+            - If sufficient stock is not available, the order will not be processed.
+            - Only authenticated users are allowed to place orders.
     """
     placedOrderRspObj = standard_response(status_code=404, messages=["Product not found."])
     try:

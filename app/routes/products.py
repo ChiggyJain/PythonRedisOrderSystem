@@ -36,16 +36,16 @@ def prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline(product
 router = APIRouter()
 
 @router.get("/", summary="Fetch all Products Details")
-async def get_all_products(isValidSessionToken:bool=Depends(isValidLoggedInUserSessionToken)):
+async def get_all_products(isValidSessionToken=Depends(isValidLoggedInUserSessionToken)):
     """
         Retrieve the complete list of available products.
         This endpoint returns all products along with their basic details such as
         product ID, product name, and available stock quantity.
-        **Requirements**
-        - A valid logged-in session token must be provided in request-headers.
-        **Notes**
-        - If the session token is invalid or expired, the request will be rejected.
-        - This API does not require any path parameters.
+        - **Requirements**
+            - A valid logged-in session token must be provided in request-headers.
+        - **Notes**
+            - If the session token is invalid or expired, the request will be rejected.
+            - This API does not require any path parameters.
     """
     productsRspObj = standard_response(status_code=404, messages=["Products not found."])
     try:
@@ -66,13 +66,13 @@ async def get_product_details(params:ProductDetailRequest=Depends(), isValidSess
     """
         Retrieve the details of a specific product.
         This endpoint returns detailed information about a single product based on the product ID provided in the request path.
-        **Requirements**
-        - A valid logged-in session token must be provided in request-headers.
-        **Parameters**
-        - `product_id` (path): Unique ID of the product whose details are required.
-        **Notes**
-        - If the session token is invalid or expired, the request will be rejected.
-        - If the product ID does not exist, an appropriate error message will be returned.
+        - **Requirements**
+            - A valid logged-in session token must be provided in request-headers.
+        - **Parameters**
+            - `product_id` (path): Unique ID of the product whose details are required.
+        - **Notes**
+            - If the session token is invalid or expired, the request will be rejected.
+            - If the product ID does not exist, an appropriate error message will be returned.
     """
     productRspObj = standard_response(status_code=404, messages=["Product not found."])
     try:
@@ -102,15 +102,15 @@ async def update_product_stock_details(params:ProductStockRequest, isValidSessio
         Update the stock quantity of a specific product.
         This endpoint updates the available stock quantity for a given product
         based on the details provided in the request body.
-        **Requirements**
-        - A valid logged-in session token must be provided in the request headers.
-        **Request Body**
-        - `product_id`: The unique ID of the product whose stock needs to be updated.
-        - `stock_quantity`: The new stock quantity to set for the product.
-        **Notes**
-        - If the session token is invalid or expired, the request will be rejected.
-        - If the product ID does not exist, an appropriate error message will be returned.
-        - Only authenticated users are allowed to perform stock updates.
+        - **Requirements**
+            - A valid logged-in session token must be provided in the request headers.
+        - **Request Body**
+            - `product_id`: The unique ID of the product whose stock needs to be updated.
+            - `stock_quantity`: The new stock quantity to set for the product.
+        - **Notes**
+            - If the session token is invalid or expired, the request will be rejected.
+            - If the product ID does not exist, an appropriate error message will be returned.
+            - Only authenticated users are allowed to perform stock updates.
     """
     productRspObj = standard_response(status_code=404, messages=["Product stock quantity not updated."])
     try:

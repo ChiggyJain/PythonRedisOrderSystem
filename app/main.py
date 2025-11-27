@@ -19,7 +19,7 @@ async def lifespan(app):
     redisConObj.close()
     print("Closed redis connection...")
 
-app = FastAPI(title="Python Redis Order System", lifespan=lifespan)
+app = FastAPI(title="Python Redis Order System", lifespan=lifespan, swagger_ui_parameters={"persistAuthorization": False})
 app.include_router(users_router.router, prefix="/users", tags=["users"])
 app.include_router(products_router.router, prefix="/products", tags=["products"])
 app.include_router(orders_router.router, prefix="/orders", tags=["orders"])
@@ -27,6 +27,7 @@ app.include_router(orders_router.router, prefix="/orders", tags=["orders"])
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    print(f"request: {request.headers}")
     error_messages = []
     for err in exc.errors():
         field = ".".join(err["loc"][1:])
