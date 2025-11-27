@@ -27,7 +27,6 @@ app.include_router(orders_router.router, prefix="/orders", tags=["orders"])
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    print(f"request: {request.headers}")
     error_messages = []
     for err in exc.errors():
         field = ".".join(err["loc"][1:])
