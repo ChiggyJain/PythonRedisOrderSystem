@@ -13,7 +13,7 @@ from app.routes.products import (
     getDummyProductIdWiseDetails, 
     prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline
 )
-
+from app.config import *
 
 router = APIRouter()
 
@@ -55,27 +55,30 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
                     bulkProductSetCacheRedisEntries = prepareProductsDetailsToSetKeyValueObjCacheEntriesInRedisViaPipeline([productIdWiseDetails[productId]])
                     redisPipelineExecutedRspObj = bulkSetKeyValueObjCacheEntriesInRedisViaPipeline(bulkProductSetCacheRedisEntries)
                     # adding placed-order event-data into redis stream for background processing details via (worker)
-                    orderPlacedRedisStreamName = "Order-Placed-Stream"
+                    orderPlacedRedisStreamName = ORDER_PLACED_STREAM
                     orderPlacedEventData = copy.deepcopy(productIdWiseDetails[productId])
                     orderPlacedEventData['orderId'] = createdNewOrderId
                     orderPlacedEventData['purchaseProductStockQty'] = productStockQuantity
-
-
                     addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
                     
-                    #time.sleep(1)
-                    #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
-                    #time.sleep(1)
-                    #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
-                    #time.sleep(1)
-                    #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
+                    ## for testing purpose only
+                    """
+                    
+                        #time.sleep(1)
+                        #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
+                        #time.sleep(1)
+                        #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
+                        #time.sleep(1)
+                        #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
 
-                    # from app.workers.order_placed_worker import runOrderPlacedStreamConsumerGroupWorker1
-                    # runOrderPlacedStreamConsumerGroupWorker1()
+                        # from app.workers.order_placed_worker import runOrderPlacedStreamConsumerGroupWorker1
+                        # runOrderPlacedStreamConsumerGroupWorker1()
 
-                    # from app.workers.order_placed_worker import createOrderPlacedStreamConsumerGroupInRedis
-                    # createOrderPlacedStreamConsumerGroupInRedis()
+                        # from app.workers.order_placed_worker import createOrderPlacedStreamConsumerGroupInRedis
+                        # createOrderPlacedStreamConsumerGroupInRedis()
 
+                    """
+    
                     # dumping response
                     placedOrderRspObj['status_code'] = 200
                     placedOrderRspObj['messages'] = [f"Order placed successfully."]
@@ -83,8 +86,6 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
                         "orderId" : createdNewOrderId
                     }
                     
-                    
-
                 else:
                     placedOrderRspObj['status_code'] = fixedWindowRedisRateLimiterRspObj['status_code']
                     placedOrderRspObj['messages'] = fixedWindowRedisRateLimiterRspObj['messages']                    

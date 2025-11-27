@@ -3,6 +3,7 @@ import time
 import json
 from app.redis_client import redisConObj
 from app.utils.response import standard_response, standard_http_response
+from app.config import *
 
 
 
@@ -13,8 +14,8 @@ def createOrderPlacedStreamConsumerGroupInRedis():
         - If the consumer group already exists, the function will not throw an error.
         - Returns a standardized response object.
     """
-    orderPlacedStreamName = "Order-Placed-Stream"
-    orderPlacedGroupName = "Order-Placed-Group"
+    orderPlacedStreamName = ORDER_PLACED_STREAM
+    orderPlacedGroupName = ORDER_PLACED_GROUP
     createdOrderPlacedStreamConsumerGroupInRedisRspObj = standard_response(status_code=400, messages=["Failed to create consumer group."])
     try:
         createdOrderPlacedStreamConsumerGroupInRedisResult = redisConObj.xgroup_create(orderPlacedStreamName, orderPlacedGroupName, id="0", mkstream=True)
@@ -35,9 +36,9 @@ def createOrderPlacedStreamConsumerGroupInRedis():
 
 def runOrderPlacedStreamConsumerGroupWorker1(pollInterval=1.0):
     try:
-        orderPlacedStreamName = "Order-Placed-Stream"
-        orderPlacedGroupName = "Order-Placed-Group"
-        orderPlacedGroupWorker1Name = "Order-Placed-Group-Worker1"
+        orderPlacedStreamName = ORDER_PLACED_STREAM
+        orderPlacedGroupName = ORDER_PLACED_GROUP
+        orderPlacedGroupWorker1Name = ORDER_PLACED_GROUP_WORKER1
         createOrderPlacedStreamConsumerGroupInRedis()
         print(f"Worker {orderPlacedGroupWorker1Name} is reading events from stream {orderPlacedStreamName} of consumer group {orderPlacedGroupName}")
         while True:
