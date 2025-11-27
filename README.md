@@ -85,3 +85,26 @@ This:
 - Background worker listens and processes orders  
 - Worker acknowledges processed messages
 
+
+---
+
+## ⚙️ Installation (Local Machine)
+
+### **1️⃣ Install System Requirements**
+- Python **3.12**
+- Redis Server (latest stable)
+
+---
+
+## 🐍 Setup Virtual Environment
+
+```bash python3 -m venv venv
+
+Activate environment: source venv/bin/activate
+Install project dependencies: pip install -r requirements.txt
+▶️ Running the Project
+Terminal 1 – Start FastAPI Application
+uvicorn app.main:app
+Terminal 2 – Start Background Redis Worker
+python -c "from app.workers.order_placed_worker import runOrderPlacedStreamConsumerGroupWorker1; runOrderPlacedStreamConsumerGroupWorker1()"
+
