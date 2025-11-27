@@ -39,7 +39,8 @@ def runOrderPlacedStreamConsumerGroupWorker1(pollInterval=1.0):
         orderPlacedStreamName = ORDER_PLACED_STREAM
         orderPlacedGroupName = ORDER_PLACED_GROUP
         orderPlacedGroupWorker1Name = ORDER_PLACED_GROUP_WORKER1
-        createOrderPlacedStreamConsumerGroupInRedis()
+        createdOrderPlacedStreamConsumerGroupInRedisRspObj = createOrderPlacedStreamConsumerGroupInRedis()
+        print(f"createdOrderPlacedStreamConsumerGroupInRedisRspObj: {createdOrderPlacedStreamConsumerGroupInRedisRspObj}")
         print(f"Worker {orderPlacedGroupWorker1Name} is reading events from stream {orderPlacedStreamName} of consumer group {orderPlacedGroupName}")
         while True:
             try:
@@ -54,8 +55,18 @@ def runOrderPlacedStreamConsumerGroupWorker1(pollInterval=1.0):
                         redisConObj.xack(orderPlacedStreamName, orderPlacedGroupName, event_id)
                         print(f"Processed stream events and acknowledged to this Event-ID: {event_id}")
             except Exception as e:
-                print(f"An error occured: {str(e)}")
+                if "NOGROUP" in str(e):
+                    print("Group missing, creating again...")
+                    createOrderPlacedStreamConsumerGroupInRedis()
+                    time.sleep(pollInterval)
+                    continue
+                if "UNBLOCKED" in str(e):
+                    print("Stream key missing, skipping...")
+                    createOrderPlacedStreamConsumerGroupInRedis()
+                    time.sleep(1)
+                    continue
+                print(f"An error occured in while loop:runOrderPlacedStreamConsumerGroupWorker1: {str(e)}")
                 time.sleep(pollInterval)
     except Exception as e:
-        print(f"An error occured: {str(e)}")
+        print(f"An error occured in func:runOrderPlacedStreamConsumerGroupWorker1: {str(e)}")
         pass

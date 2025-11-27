@@ -17,9 +17,9 @@ def redis_setup_and_cleanup():
     yield
 
     print("\n=== AFTER ALL TESTS: Closing Redis ===")
-    redisConObj.flushall()
+    #redisConObj.flushall()
     print("Redis FLUSHALL executed (after tests)")
-    redisConObj.close()
+    #redisConObj.close()
     print("Closed redis connection...")
 
 
