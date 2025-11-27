@@ -29,10 +29,31 @@ def createOrderPlacedStreamConsumerGroupInRedis():
             ]
         else:
             createdOrderPlacedStreamConsumerGroupInRedisRspObj["status_code"] = 500
-            createdOrderPlacedStreamConsumerGroupInRedisRspObj["messages"] = [f"Redis error: {str(e)}"]      
+            createdOrderPlacedStreamConsumerGroupInRedisRspObj["messages"] = [f"An error occured: {str(e)}"]
     return createdOrderPlacedStreamConsumerGroupInRedisRspObj
 
 
-def run_worker(poll_interval=1.0):
-    createOrderPlacedStreamConsumerGroupInRedis()
-    pass
+def runOrderPlacedStreamConsumerGroupWorker1(pollInterval=1.0):
+    try:
+        orderPlacedStreamName = "Order-Placed-Stream"
+        orderPlacedGroupName = "Order-Placed-Group"
+        orderPlacedGroupWorker1Name = "Order-Placed-Group-Worker1"
+        createOrderPlacedStreamConsumerGroupInRedis()
+        print(f"Worker {orderPlacedGroupWorker1Name} is reading events from stream {orderPlacedStreamName} of consumer group {orderPlacedGroupName}")
+        while True:
+            try:
+                entries = redisConObj.xreadgroup(orderPlacedGroupName, orderPlacedGroupWorker1Name, {orderPlacedStreamName: ">"}, count=5, block=2000)
+                if not entries:
+                    time.sleep(pollInterval)
+                    continue
+                for stream_name, items in entries:
+                    for event_id, event_data in items:
+                        print(f"Stream-Name: {orderPlacedStreamName}, Group-Name: {orderPlacedGroupName}, Worker-Name: {orderPlacedGroupWorker1Name}, Event-ID: {event_id}, Event-Data: {event_data}")
+                        redisConObj.xack(orderPlacedStreamName, orderPlacedGroupName, event_id)
+                        print(f"Processed stream events and acknowledged to this Event-ID: {event_id}")
+            except Exception as e:
+                print(f"An error occured: {str(e)}")
+                time.sleep(pollInterval)
+    except Exception as e:
+        print(f"An error occured: {str(e)}")
+        pass

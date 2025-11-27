@@ -59,15 +59,30 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
                     orderPlacedEventData = copy.deepcopy(productIdWiseDetails[productId])
                     orderPlacedEventData['orderId'] = createdNewOrderId
                     orderPlacedEventData['purchaseProductStockQty'] = productStockQuantity
+
+
                     addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
+                    
+                    #time.sleep(1)
+                    #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
+                    #time.sleep(1)
+                    #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
+                    #time.sleep(1)
+                    #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
+
+                    # from app.workers.order_placed_worker import runOrderPlacedStreamConsumerGroupWorker1
+                    # runOrderPlacedStreamConsumerGroupWorker1()
+
+                    # from app.workers.order_placed_worker import createOrderPlacedStreamConsumerGroupInRedis
+                    # createOrderPlacedStreamConsumerGroupInRedis()
+
                     # dumping response
                     placedOrderRspObj['status_code'] = 200
                     placedOrderRspObj['messages'] = [f"Order placed successfully."]
                     placedOrderRspObj['data'] = {
                         "orderId" : createdNewOrderId
                     }
-                    # from app.workers.order_placed_worker import createOrderPlacedStreamConsumerGroupInRedis
-                    # createOrderPlacedStreamConsumerGroupInRedis()
+                    
                     
 
                 else:
