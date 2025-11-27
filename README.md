@@ -20,9 +20,12 @@ This project demonstrates real-world backend engineering including Redis caching
 
 ### **3. Custom Exception Handling**
 - All API errors return a **Standard Response Format**  
-- Global error handlers implemented  
+- Global error handlers implemented
 
-### **4. Redis Features**
+### **4. Custom Response Handling**
+- All API return a **Standard Response Format**  
+
+### **5. Redis Features**
 Used extensively across the project:
 
 | Feature | Usage |
@@ -34,13 +37,13 @@ Used extensively across the project:
 | Streams (XADD / XREADGROUP / XACK) | Order queue processing |
 | Sets | Internal unique key store |
 
-### **5. PyTest**
+### **6. PyTest**
 - Session-scoped fixtures  
 - Worker integration testing  
 - E2E test execution  
 - Clean isolation between test runs  
 
-### **6. Swagger UI**
+### **7. Swagger UI**
 Auto-generated interactive API documentation via FastAPI.
 
 ---
@@ -48,3 +51,12 @@ Auto-generated interactive API documentation via FastAPI.
 ## 📘 API Endpoints Overview
 
 ### **1️⃣ System Health**
+GET /system-health
+Checks if the backend is running.
+
+### **2️⃣ User Login (Generates Session Token)**
+POST /users/login
+- Validates user credentials  
+- Generates a session token stored in Redis (No JWT)  
+- Token TTL controlled by Redis  
+- Returns token in standard response format  
