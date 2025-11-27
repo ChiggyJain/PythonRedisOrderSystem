@@ -63,7 +63,7 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
                     
                     ## for testing purpose only
                     """
-                    
+
                         #time.sleep(1)
                         #addedEventDataInRedisStreamRspObj = addEventDataInRedisStream(orderPlacedRedisStreamName, orderPlacedEventData)
                         #time.sleep(1)
@@ -90,7 +90,7 @@ def place_single_product_order_details(params:OrderPlaceRequest, isValidSessionT
                     placedOrderRspObj['status_code'] = fixedWindowRedisRateLimiterRspObj['status_code']
                     placedOrderRspObj['messages'] = fixedWindowRedisRateLimiterRspObj['messages']                    
             else:
-                placedOrderRspObj['messages'] = [f"Insufficient product quantity."]
+                placedOrderRspObj['messages'] = [f"Order not placed due to insufficient product quantity."]
         else:
             placedOrderRspObj['status_code'] = 404
             placedOrderRspObj['messages'] = [f"Given product_id does not exists to place the order details."]

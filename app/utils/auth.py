@@ -4,7 +4,7 @@ from app.utils.redis_key_helper import isValidRedisKeyTTL
 
 
 def isValidLoggedInUserSessionToken(authorization: str = Header(None)):
-    return True
+    # return True
     if not authorization:
         raise HTTPException(
             status_code=401,
