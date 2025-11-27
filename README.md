@@ -60,3 +60,28 @@ POST /users/login
 - Generates a session token stored in Redis (No JWT)  
 - Token TTL controlled by Redis  
 - Returns token in standard response format  
+
+### **3️⃣ Get All Products**
+GET /products
+Headers:
+Authorization: Bearer <token>
+
+### **4️⃣ Get Product by ID**
+GET /products/{product_id}
+Headers:
+Authorization: Bearer <token>
+
+### **5️⃣ Set Product Stock**
+POST /products/setstock
+Headers:
+Authorization: Bearer <token>
+
+### **6️⃣ Place Order (Redis Stream Event)**
+POST /orders/place-order
+Headers:
+Authorization: Bearer <token>
+This:
+- Pushes an order event into a Redis Stream  
+- Background worker listens and processes orders  
+- Worker acknowledges processed messages
+
